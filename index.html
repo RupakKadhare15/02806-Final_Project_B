@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Emotional Receipts — A nation's playlist as its therapy bill</title>
+<meta name="description" content="170,614 Spotify chart entries across 34 nations, lined up against the World Happiness Report. A DTU 02806 final project." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#05050a; --bg-1:#0a0a13; --bg-card:#0d0d18; --bg-raised:#13131f;
+    --ink:#e6e6f0; --ink-dim:#b4b4c8; --ink-ghost:#7a7a8c; --ink-faint:#3a3a4f;
+    --line:#22223380; --line-hot:#2d2d44;
+    --cyan:#00e5ff; --magenta:#ff2ec4; --amber:#ffb400; --green:#00ff85;
+    --serif:'Fraunces', Georgia, serif;
+    --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --sans:'Inter', -apple-system, system-ui, sans-serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  a{color:var(--cyan); text-decoration:none; border-bottom:1px dotted var(--cyan); transition:.2s}
+  a:hover{color:var(--magenta); border-color:var(--magenta)}
+  .mono{font-family:var(--mono); letter-spacing:.02em}
+  .dim{color:var(--ink-dim)}
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px}
+
+  /* ambient backdrop */
+  .ambient{position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:hidden}
+  .ambient::before{
+    content:''; position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 18% 92%, rgba(255,46,196,.08), transparent 55%),
+      radial-gradient(circle at 88% 8%,  rgba(0,229,255,.06),   transparent 50%),
+      radial-gradient(circle at 50% 60%, rgba(255,180,0,.025),  transparent 60%);
+  }
+  .ambient::after{
+    content:''; position:absolute; inset:0; opacity:.18; mix-blend-mode:overlay;
+    background-image:repeating-linear-gradient(
+      to bottom,
+      rgba(230,230,240,.018) 0,
+      rgba(230,230,240,.018) 1px,
+      transparent 1px, transparent 3px);
+  }
+
+  /* nav */
+  nav.top{
+    position:fixed; top:0; left:0; right:0; z-index:900; height:56px;
+    display:flex; justify-content:space-between; align-items:center;
+    background:rgba(5,5,10,.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line); font-family:var(--mono);
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    padding:0 max(32px, calc((100vw - 1180px) / 2));
+  }
+  .nav-left{display:flex; align-items:center; gap:36px}
+  nav.top .brand{color:var(--ink); font-weight:600}
+  nav.top .brand b{color:var(--magenta); font-weight:700}
+  nav.top ul{display:flex; gap:22px; list-style:none}
+  nav.top a{color:var(--ink-dim); border:none}
+  nav.top a:hover{color:var(--cyan)}
+  @media(max-width:780px){nav.top ul{display:none}}
+
+  /* hero */
+  header.hero{
+    min-height:90vh; padding:120px 0 60px;
+    display:flex; flex-direction:column; justify-content:center;
+    position:relative; overflow:hidden;
+  }
+  .hero-tag{
+    font-family:var(--mono); font-size:11px; letter-spacing:.32em;
+    text-transform:uppercase; color:var(--magenta); margin-bottom:22px;
+    display:inline-flex; align-items:center; gap:12px;
+  }
+  .hero-tag::before{content:''; width:28px; height:1px; background:var(--magenta)}
+  h1.hero-title{
+    font-family:var(--serif); font-weight:900;
+    font-size:clamp(46px, 7.4vw, 92px); line-height:0.94;
+    letter-spacing:-.03em; margin-bottom:22px; font-style:italic;
+  }
+  h1.hero-title em{color:var(--magenta); font-style:italic; font-weight:300}
+  .hero-tagline{
+    font-family:var(--serif); font-style:italic; font-size:clamp(22px, 3.2vw, 36px);
+    font-weight:300; color:var(--cyan); margin-bottom:0;
+    letter-spacing:-.01em; line-height:1.3;
+  }
+  .highlight-badge{
+    display:inline-block; margin-top:20px; padding:6px 18px; border-radius:4px;
+    background:var(--magenta); color:#fff; font-family:var(--sans); font-weight:600;
+    font-size:13px; font-style:normal; letter-spacing:.1em; text-transform:uppercase;
+    box-shadow:0 8px 24px rgba(255,46,196,0.22);
+  }
+  .hero-docket{
+    margin-top:50px; display:grid; grid-template-columns:1.2fr 1fr;
+    gap:40px; align-items:center;
+    background:var(--bg-card); border:1px solid var(--line); border-radius:8px;
+    padding:36px; max-width:980px; box-shadow:0 24px 48px rgba(0,0,0,.45);
+  }
+  @media(max-width:800px){.hero-docket{grid-template-columns:1fr; gap:24px; padding:24px}}
+  .docket-text{
+    font-size:16px; line-height:1.75; color:var(--ink-dim);
+    padding-right:24px; border-right:1px solid var(--line);
+  }
+  .docket-text b{color:var(--ink)}
+  @media(max-width:800px){.docket-text{border-right:none; border-bottom:1px solid var(--line); padding:0 0 24px 0}}
+  .hero-meta{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:24px;
+    font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.1em;
+  }
+  .hero-meta .val{
+    font-size:28px; color:var(--cyan); letter-spacing:0; text-transform:none;
+    font-weight:600; display:block; margin-bottom:2px; font-family:var(--mono);
+  }
+  .hero-meta .lab{color:var(--ink-ghost)}
+  .hero-scroll-hint{
+    position:absolute; bottom:40px; left:50%; transform:translateX(-50%);
+    font-family:var(--mono); font-size:10px; letter-spacing:.3em;
+    color:var(--ink-ghost); animation:bob 2.5s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)}}
+
+  /* sections */
+  section{padding:100px 0; position:relative}
+  section.alt{background:linear-gradient(180deg, transparent, var(--bg-1) 50%, transparent)}
+  .kicker{
+    font-family:var(--mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:.32em; color:var(--cyan); margin-bottom:18px;
+    display:inline-flex; align-items:center; gap:12px;
+  }
+  .kicker::before{content:''; width:28px; height:1px; background:var(--cyan)}
+  .kicker.magenta{color:var(--magenta)} .kicker.magenta::before{background:var(--magenta)}
+  .kicker.amber{color:var(--amber)} .kicker.amber::before{background:var(--amber)}
+  h2{
+    font-family:var(--serif); font-weight:400;
+    font-size:clamp(32px, 4.5vw, 54px); line-height:1.05;
+    letter-spacing:-.02em; margin-bottom:24px;
+  }
+  h2 em{color:var(--magenta); font-weight:300; font-style:italic}
+  h3{font-family:var(--serif); font-weight:600; font-size:26px; letter-spacing:-.01em; margin-bottom:14px}
+  p.lede{font-size:21px; line-height:1.6; max-width:740px; color:var(--ink); margin-bottom:22px}
+  p.body{font-size:18px; line-height:1.8; max-width:740px; color:var(--ink); margin-bottom:18px; font-weight:400}
+  p.body b{color:var(--ink)}
+
+  /* viz card */
+  .viz-card{background:var(--bg-card); border:1px solid var(--line); padding:22px; margin-top:32px; border-radius:4px}
+  .viz-card h3{margin-bottom:6px}
+  .viz-card .viz-sub{font-family:var(--mono); font-size:11px; color:var(--ink-ghost); letter-spacing:.08em; margin-bottom:22px}
+  .viz-card iframe{width:100%; border:0; display:block; background:transparent; border-radius:2px}
+  .viz-card img{width:100%; display:block; border-radius:2px}
+  figcaption{
+    font-family:var(--mono); font-size:13px; color:var(--ink); margin-top:16px;
+    line-height:1.65; letter-spacing:.02em; padding:0 6px;
+  }
+  figcaption b{color:var(--ink)}
+
+  /* metric / formula */
+  .metric-explainer{display:grid; grid-template-columns:1fr 1.1fr; gap:48px; align-items:center; margin-top:56px}
+  @media(max-width:860px){.metric-explainer{grid-template-columns:1fr}}
+  .formula-box{
+    background:var(--bg-card); border:1px solid var(--line);
+    padding:40px 32px; position:relative; border-radius:4px;
+  }
+  .formula-box::before{
+    content:'FORMULA'; position:absolute; top:-10px; left:20px;
+    background:var(--bg); padding:0 10px; font-family:var(--mono);
+    font-size:10px; letter-spacing:.32em; color:var(--ink-ghost);
+  }
+  .formula{
+    font-family:var(--mono); font-size:20px; text-align:center;
+    padding:18px 0; color:var(--ink); line-height:1.4;
+    display:flex; align-items:center; justify-content:center; gap:14px;
+  }
+  .formula .lhs{font-size:18px}
+  .formula .frac{
+    display:inline-flex; flex-direction:column; align-items:center;
+    vertical-align:middle; line-height:1.2;
+  }
+  .formula .num{padding:0 14px 6px}
+  .formula .den{padding:6px 14px 0; border-top:1.5px solid var(--ink)}
+  .formula .v{color:var(--magenta)}
+  .formula .e{color:var(--cyan)}
+
+  .two-axis-demo{
+    position:relative; height:320px; border:1px solid var(--line); border-radius:4px;
+    background:
+      linear-gradient(0deg,  transparent 49%, rgba(122,122,140,.15) 50%, rgba(122,122,140,.15) 51%, transparent 52%),
+      linear-gradient(90deg, transparent 49%, rgba(122,122,140,.15) 50%, rgba(122,122,140,.15) 51%, transparent 52%);
+  }
+  .two-axis-demo .axis-x, .two-axis-demo .axis-y{
+    position:absolute; font-family:var(--mono); font-size:10px; color:var(--ink-ghost); letter-spacing:.2em;
+  }
+  .two-axis-demo .axis-x{bottom:6px; left:50%; transform:translateX(-50%)}
+  .two-axis-demo .axis-y{left:6px; top:50%; transform:translateY(-50%) rotate(-90deg); transform-origin:left top}
+  .two-axis-demo .pt{position:absolute; width:14px; height:14px; border-radius:50%; border:2px solid var(--ink)}
+  .two-axis-demo .pt .lab{
+    position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    font-family:var(--mono); font-size:10px; white-space:nowrap; color:var(--ink);
+  }
+  .two-axis-demo .pt.intense{bottom:72%; left:30%; background:var(--magenta)}
+  .two-axis-demo .pt.joy{bottom:25%; left:48%; background:var(--amber)}
+
+  /* thesis room */
+  .thesis-room{padding:100px 0; text-align:center; background:var(--bg)}
+  .thesis-room p.thesis{
+    font-family:var(--serif); font-style:italic; font-weight:300;
+    font-size:clamp(24px, 3.5vw, 42px); line-height:1.2;
+    max-width:880px; margin:0 auto; color:var(--ink);
+  }
+  .thesis-room p.thesis em{color:var(--magenta); font-style:italic; font-weight:600}
+  .thesis-room p.cue{
+    font-family:var(--mono); font-size:24px; letter-spacing:.32em;
+    color:var(--cyan); margin-top:36px; text-transform:uppercase;
+    animation:bob 2.5s ease-in-out infinite;
+  }
+
+  /* paradox card */
+  .paradox-card{
+    margin-top:48px; background:var(--bg-card); border:1px solid var(--line-hot);
+    padding:44px 40px; position:relative; border-radius:8px;
+  }
+  .paradox-card::before{
+    content:'⚠ THE INVERSION'; position:absolute; top:-12px; left:24px;
+    background:var(--bg); color:var(--magenta); font-family:var(--mono);
+    font-size:11px; letter-spacing:.22em; padding:2px 12px; border:1px solid var(--magenta);
+  }
+  .paradox-card .quote{
+    font-family:var(--serif); font-style:italic; font-size:26px;
+    line-height:1.4; font-weight:300; margin-bottom:16px;
+  }
+  .paradox-card .quote em{color:var(--magenta); font-weight:600; font-style:normal}
+  .paradox-stats{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+    gap:18px; margin-top:32px; font-family:var(--mono);
+  }
+  .paradox-stats div{border-left:2px solid var(--line-hot); padding-left:14px}
+  .paradox-stats .k{
+    font-size:10px; text-transform:uppercase; letter-spacing:.22em;
+    color:var(--ink-ghost); margin-bottom:6px;
+  }
+  .paradox-stats .v{font-size:22px; color:var(--ink)}
+  .paradox-stats .v em{color:var(--magenta); font-style:normal}
+  .paradox-stats .v.cyan{color:var(--cyan)}
+
+  .survives{
+    text-align:center; margin-top:50px; padding:28px 20px;
+    border-top:1px dashed var(--line-hot); border-bottom:1px dashed var(--line-hot);
+  }
+  .survives p{font-family:var(--serif); font-style:italic; font-size:32px; font-weight:400; color:var(--ink)}
+  .survives p em{color:var(--cyan); font-weight:600; font-style:normal}
+
+  /* explanation cards */
+  .explain-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; margin-top:38px}
+  @media(max-width:900px){.explain-grid{grid-template-columns:1fr}}
+  .explain-card{
+    background:var(--bg-card); border:1px solid var(--line);
+    padding:24px 22px; border-radius:6px; position:relative;
+  }
+  .explain-card .num{
+    font-family:var(--mono); font-size:11px; letter-spacing:.22em;
+    color:var(--ink-ghost); margin-bottom:10px; display:block;
+  }
+  .explain-card h4{
+    font-family:var(--serif); font-size:20px; line-height:1.3;
+    font-weight:600; margin-bottom:10px; color:var(--ink);
+  }
+  .explain-card p{font-size:15px; line-height:1.65; color:var(--ink-dim)}
+
+  /* §05 receipt + radar */
+  .receipt-pickers{
+    display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+    margin:32px 0 12px;
+  }
+  .receipt-pickers label{
+    font-family:var(--mono); font-size:10px; letter-spacing:.22em;
+    color:var(--ink-ghost); text-transform:uppercase;
+  }
+  .receipt-pickers select{
+    appearance:none; background:var(--bg-card); border:1px solid var(--cyan); color:var(--ink);
+    padding:8px 30px 8px 12px; font-family:var(--mono); font-size:13px; cursor:pointer;
+    background-image:linear-gradient(45deg, transparent 50%, var(--cyan) 50%),
+                     linear-gradient(-45deg, transparent 50%, var(--cyan) 50%);
+    background-position:calc(100% - 14px) 50%, calc(100% - 8px) 50%;
+    background-size:5px 5px, 5px 5px; background-repeat:no-repeat;
+    min-width:170px; border-radius:3px;
+  }
+  .receipt-pickers select:focus{outline:none; border-color:var(--magenta)}
+
+  .profile-wrap{
+    display:grid; grid-template-columns:340px 1fr; gap:40px;
+    margin-top:32px; align-items:start;
+  }
+  @media(max-width:900px){.profile-wrap{grid-template-columns:1fr}}
+
+  .receipt{
+    background:#f5f4ec; color:#181820; padding:26px 22px;
+    font-family:var(--mono); font-size:11px; line-height:1.65;
+    box-shadow:0 24px 48px rgba(0,0,0,.5); position:relative;
+    border-radius:2px;
+  }
+  .receipt::before, .receipt::after{
+    content:''; position:absolute; left:0; right:0; height:14px;
+    background-image:radial-gradient(circle at 7px 0, transparent 6px, #f5f4ec 6.5px);
+    background-size:14px 14px;
+  }
+  .receipt::before{top:-8px}
+  .receipt::after{bottom:-8px; transform:scaleY(-1)}
+  .receipt .r-head{
+    text-align:center; font-weight:700; letter-spacing:.2em;
+    font-size:10px; padding-bottom:14px;
+    border-bottom:1px dashed #181820; margin-bottom:14px;
+  }
+  .receipt .r-row{display:flex; justify-content:space-between; padding:3px 0}
+  .receipt .r-row.bold{font-weight:700}
+  .receipt .r-row.r-tiny{font-size:9px; color:#5a5a64; margin-top:2px}
+  .receipt .r-row.r-genre{font-size:11px; padding:4px 0; border-bottom:1px dotted #d4d4c8}
+  .receipt .r-row.r-genre:last-of-type{border-bottom:none}
+  .receipt .r-row.r-genre span:first-child{text-transform:lowercase; color:#181820}
+  .receipt .r-row.r-genre span:last-child{font-variant-numeric:tabular-nums; font-weight:600}
+  .receipt .r-divider{border-top:1px dashed #999; margin:12px 0}
+  .receipt .r-section{
+    font-weight:700; font-size:10px; letter-spacing:.18em;
+    margin:6px 0 8px; text-align:center; color:#181820;
+  }
+  .receipt .r-foot{
+    text-align:center; font-size:9px; color:#5a5a64;
+    margin-top:18px; padding-top:12px; border-top:1px dashed #181820;
+    letter-spacing:.1em;
+  }
+
+  /* CTAs */
+  .cta{
+    display:inline-block; margin-right:14px; padding:14px 28px;
+    background:var(--magenta); color:#fff; border:1px solid var(--magenta);
+    border-radius:3px; font-family:var(--mono); font-size:12px;
+    letter-spacing:.18em; text-transform:uppercase; font-weight:600;
+    border-bottom:1px solid var(--magenta); transition:.2s;
+  }
+  .cta:hover{background:transparent; color:var(--magenta); border-color:var(--magenta)}
+  .cta.alt{background:transparent; color:var(--cyan); border:1px solid var(--cyan); border-bottom:1px solid var(--cyan)}
+  .cta.alt:hover{background:var(--cyan); color:var(--bg)}
+
+  /* footer */
+  footer{padding:80px 0 40px; border-top:1px solid var(--line); margin-top:60px}
+  footer .wrap{display:grid; grid-template-columns:repeat(3,1fr); gap:40px}
+  @media(max-width:780px){footer .wrap{grid-template-columns:1fr}}
+  footer h5{
+    font-family:var(--mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:.22em; color:var(--ink); margin-bottom:14px;
+  }
+  footer p{font-size:13px; line-height:1.7; color:var(--ink-dim); margin-bottom:8px}
+  footer a{display:block; font-size:13px; color:var(--ink-dim); margin-bottom:6px; border:none}
+  footer a:hover{color:var(--cyan)}
+  footer .fine{
+    margin-top:40px; padding-top:20px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:11px; color:var(--ink-ghost); letter-spacing:.1em;
+  }
+
+  /* reveal-on-scroll */
+  .reveal{opacity:0; transform:translateY(20px); transition:opacity .8s ease, transform .8s ease}
+  .reveal.in{opacity:1; transform:translateY(0)}
+
+  ::-webkit-scrollbar{width:8px; background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--line-hot); border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--ink-faint)}
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<nav class="top">
+  <div class="nav-left">
+    <span class="brand">EMOTIONAL <b>RECEIPTS</b></span>
+    <ul>
+      <li><a href="#question">01</a></li>
+      <li><a href="#metric">02</a></li>
+      <li><a href="#map">03</a></li>
+      <li><a href="#verdict">04</a></li>
+      <li><a href="#genre">05</a></li>
+      <li><a href="#close">06</a></li>
+      <li><a href="#profile">07</a></li>
+    </ul>
+  </div>
+  <div><a href="explainer_notebook.ipynb" style="border:none; color:var(--ink-ghost)">notebook ↗</a></div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-tag reveal">DTU 02806 · Final Project · Spring 2026</div>
+    <h1 class="hero-title reveal">Emotional<br><em>Receipts</em></h1>
+    <p class="hero-tagline reveal">A nation's playlist as its therapy bill.</p>
+    <span class="highlight-badge reveal">guess who's happier?</span>
+
+    <div class="hero-docket reveal">
+      <p class="docket-text">
+        <b>Does what a country streams say anything about how its people feel? Yes — but not
+        in the way you'd expect.</b> We took 170,614 chart entries from Spotify's Daily Top-200
+        across 34 countries (2017–2020) and lined them up against the
+        <b>World Happiness Report 2019</b> ladder score. The obvious test —
+        <i>happy countries listen to happy music</i> — failed in a sharp, specific direction.
+        What follows is six rooms of evidence, one inversion, and a metaphor about what a
+        nation's playlist actually records.
+      </p>
+      <div class="hero-meta">
+        <div><span class="val">170,614</span><span class="lab">chart entries</span></div>
+        <div><span class="val">34</span><span class="lab">countries</span></div>
+        <div><span class="val">10</span><span class="lab">audio features</span></div>
+        <div><span class="val">2017–2020</span><span class="lab">window</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll-hint">SCROLL ↓</div>
+</header>
+
+<section id="question">
+  <div class="wrap">
+    <div class="kicker reveal">01 · THE QUESTION</div>
+    <h2 class="reveal">Can a playlist <em>diagnose a nation?</em></h2>
+    <p class="lede reveal">
+      The <b>World Happiness Report 2019</b> measures wellbeing the slow way: it asks people
+      directly. Spotify records what those same people listen to when nobody's asking.
+      <b>Two windows on the same society — one curated, one unguarded.</b> If both windows
+      show the same view, music tells you the same thing the survey does. If they don't,
+      the disagreement is the story.
+    </p>
+    <p class="body reveal">
+      We wrote down a simple guess: <b>happy countries listen to happy music.</b>
+      Spotify gives every track a "valence" score — its measure of how positive a song sounds,
+      major-key, upbeat, cheerful. It's the obvious place to look. We chased it, and it left us
+      empty-handed. But on the way past, we found something else.
+    </p>
+  </div>
+</section>
+
+<section class="alt" id="metric">
+  <div class="wrap">
+    <div class="kicker magenta reveal">02 · THE METRIC</div>
+    <h2 class="reveal">Coping ratio: <em>how loud you cope</em></h2>
+    <p class="lede reveal">
+      Every Spotify track has two numbers attached: <b>valence</b> (how positive it sounds)
+      and <b>energy</b> (how intense it sounds). Take a country's average of each, divide one
+      by the other. That's its coping ratio.
+    </p>
+
+    <div class="metric-explainer">
+      <div class="formula-box reveal">
+        <div class="formula">
+          <span class="lhs">coping ratio<sub>c</sub> &nbsp;=</span>
+          <span class="frac">
+            <span class="num"><span class="e">energy</span><sub>c</sub></span>
+            <span class="den">(<span class="v">valence</span><sub>c</sub> + 0.01)</span>
+          </span>
+        </div>
+        <p class="dim mono" style="font-size:10px; text-align:center; margin-top:14px; letter-spacing:.18em">
+          + 0.01 PREVENTS DIVIDE-BY-ZERO &nbsp;·&nbsp; UNIT 1.0 = BALANCED
+        </p>
+      </div>
+      <div class="two-axis-demo reveal">
+        <span class="axis-x">VALENCE →</span>
+        <span class="axis-y">ENERGY →</span>
+        <div class="pt intense"><span class="lab">intense (ratio &gt; 1)</span></div>
+        <div class="pt joy"><span class="lab">balanced (ratio ≈ 1)</span></div>
+      </div>
+    </div>
+
+    <p class="body reveal" style="margin-top:38px">
+      A ratio of <b>1.0</b> means energy and positivity balance out. The global average across
+      all 170,614 tracks sits at <b>≈ 1.30</b> — that's the baseline. Above it, a country is
+      reaching for more intensity than its music is bright.
+    </p>
+  </div>
+</section>
+
+<section id="map">
+  <div class="wrap">
+    <div class="kicker reveal">03 · THE MAP</div>
+    <h2 class="reveal">Where does the world <em>cope hardest?</em></h2>
+    <p class="body reveal" style="max-width:780px">
+      The pattern divides cleanly along cultural lines.
+      <b>Latin American countries sit below the global baseline of 1.30</b> — Mexico (1.12),
+      Colombia (1.12), Chile (1.12), Peru (1.14). Their charts are dominated by
+      reggaeton, salsa, and Latin pop — music engineered for celebration, where high tempo
+      comes packaged with high brightness. Energy and positivity move in lockstep.
+    </p>
+    <p class="body reveal" style="max-width:780px">
+      <b>Several European countries run hot.</b> Italy 1.38, Germany 1.36,
+      Finland 1.34. Their charts carry just as much energy as Latin America's — but markedly
+      less brightness. Indie rock, alternative pop, melancholic synthwave, hip-hop with a
+      darker register. The music drives hard, but it doesn't smile back.
+    </p>
+    <p class="body reveal" style="max-width:780px">
+      <b>Asia/Oceania splits down the middle.</b> Taiwan and Singapore run hot like Europe;
+      Indonesia and the Philippines sit closer to the Latin American band; Australia and
+      New Zealand land near the global baseline. K-pop, J-pop, English-language imports —
+      the regional mix is more heterogeneous than either of the other two blocks.
+    </p>
+    <p class="body reveal" style="max-width:780px">
+      The first reading is the obvious one: <b>sunny countries, sunny music.</b> Latin
+      America bright, Europe moody, the cultural cliché borne out by the data. Drag the
+      globe below — the gradient runs cleanly from cool cyan through amber to magenta.
+      <b>Hold that thought.</b> When we layer in the World Happiness Report rankings in a
+      moment, the pattern stops making sense.
+    </p>
+    <figure class="viz-card reveal">
+      <h3>Figure 1 · Global Coping Map</h3>
+      <div class="viz-sub">drag to rotate · click + / − to zoom · hover for details</div>
+      <iframe src="visualizations/v1_choropleth.html" height="600" title="Coping ratio choropleth"></iframe>
+      <figcaption>
+        <b>Figure 1 ·</b> Coping ratio (energy ÷ (valence + 0.01)) averaged across the 2017–2020
+        Spotify Top-200 chart. The European cluster runs hot — Italy 1.38,
+        Germany 1.36, Finland 1.34. The Latin-American block runs cool — Mexico 1.12,
+        Colombia 1.12, Chile 1.12.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<div class="thesis-room">
+  <p class="thesis reveal">The "loud-cope" nations are <em>also the happiest.</em></p>
+  <p class="cue reveal">↓</p>
+</div>
+
+<section id="verdict">
+  <div class="wrap">
+    <div class="kicker magenta reveal">04 · THE VERDICT</div>
+    <h2 class="reveal">When the obvious story <em>flips.</em></h2>
+    <p class="body reveal">
+      The cultural read predicts the opposite of what the data shows. Sunny countries are
+      <i>not</i> the happiest. Moody countries are. The clearest way to see this is to look
+      at the audio space first, then layer in the happiness ranks.
+    </p>
+
+    <figure class="viz-card reveal">
+      <h3>Figure 2 · Valence × Energy space (continent-coloured)</h3>
+      <div class="viz-sub">europe cyan · americas magenta · asia/oceania amber · names sit inside the bubbles</div>
+      <iframe src="visualizations/v2_scatter.html" height="620" title="Valence energy scatter"></iframe>
+      <figcaption>
+        <b>Figure 2 ·</b> Each bubble is one country, positioned by mean valence (x) and mean
+        energy (y). European nations cluster in the middle — high energy, lower positivity.
+        Latin-American nations cluster upper-right. Finland, the world's happiest country in
+        WHR 2019, sits firmly inside the European cluster despite its top happiness rank.
+      </figcaption>
+    </figure>
+
+    <p class="body reveal" style="margin-top:30px">
+      Hover any bubble to see its WHR rank. The pattern is everywhere. Every European nation
+      with a high happiness rank — Denmark, Sweden, Switzerland, Norway, Austria — sits in the
+      moody center. Every Latin American nation with a low happiness rank — Mexico,
+      Colombia, Peru — sits in the bright upper-right. The numbers say it sharply:
+    </p>
+
+    <div class="paradox-card reveal">
+      <div class="quote">
+        Finland — ranked the <em>happiest</em> country on Earth — has one of the
+        <em>highest</em> coping ratios in our dataset. Colombia — full of bright Latin pop —
+        sits in the bottom band. The Colombia of the imagination and the Colombia of the
+        UN happiness survey disagree.
+      </div>
+      <div class="paradox-stats">
+        <div><div class="k">Finland · WHR rank</div><div class="v cyan">#1</div></div>
+        <div><div class="k">Finland · coping ratio</div><div class="v"><em>1.34</em></div></div>
+        <div><div class="k">Colombia · WHR rank</div><div class="v cyan">#26</div></div>
+        <div><div class="k">Colombia · coping ratio</div><div class="v">1.12</div></div>
+        <div><div class="k">r (valence ↔ happiness)</div><div class="v"><em>−0.16</em></div></div>
+        <div><div class="k">r (coping ratio ↔ happiness)</div><div class="v"><em>+0.18</em></div></div>
+      </div>
+    </div>
+
+    <h3 class="reveal" style="margin-top:64px">So if not valence, <em>what?</em></h3>
+    <p class="body reveal">
+      <b>The test:</b> Pearson correlation between each country's mean for ten audio features
+      and its WHR 2019 ladder score (<span class="mono">n = 34</span>). One number per feature,
+      ordered by strength of relationship.
+    </p>
+    <figure class="viz-card reveal">
+      <h3>Figure 3 · Audio features vs World Happiness</h3>
+      <div class="viz-sub">pearson r · 9 audio features × WHR 2019 · n = 34</div>
+      <img src="images/v3_correlations.svg" alt="Pearson correlations of ten audio features against WHR 2019"/>
+      <figcaption>
+        <b>Figure 3 ·</b> Pearson correlation of ten Spotify audio features against the WHR 2019
+        ladder score across 34 countries. <b>Acousticness</b> is the strongest negative predictor
+        (r = −0.52*); <b>speechiness</b> is the strongest positive predictor (r = +0.47*).
+        Valence — the feature this project was named after — is essentially flat (r = −0.16).
+        Asterisks mark p &lt; 0.05.
+      </figcaption>
+    </figure>
+
+    <p class="body reveal" style="margin-top:30px">
+      Happier countries listen to <b>less acoustic</b> music and <b>more speech-heavy</b>
+      music — rap, spoken word, anything narrative. Valence — Spotify's "happiness" score —
+      doesn't line up with the UN's measurement at all.
+    </p>
+    <p class="body reveal">So what's going on? Three explanations, and they're probably all partly true.</p>
+
+    <div class="explain-grid">
+      <div class="explain-card reveal">
+        <span class="num">01</span>
+        <h4>Sad music is a luxury.</h4>
+        <p>
+          When life is going well you have the room to sit with melancholy and let it
+          process. When life is harder you reach for music that lifts you up. Stable, wealthy
+          countries can sit with the heavy stuff. Struggling ones need help.
+        </p>
+      </div>
+      <div class="explain-card reveal">
+        <span class="num">02</span>
+        <h4>It might just be genre.</h4>
+        <p>
+          Latin music is engineered to sound bright — major keys, propulsive rhythm, party
+          energy — regardless of how anyone in Colombia actually felt this morning. Audio
+          features describe the music, not the listener.
+        </p>
+      </div>
+      <div class="explain-card reveal">
+        <span class="num">03</span>
+        <h4>Spotify might be fooled.</h4>
+        <p>
+          The "valence" detector was almost certainly trained mostly on English-language pop.
+          Whatever signals happiness in K-pop or Brazilian sertanejo might just look flat
+          to it.
+        </p>
+      </div>
+    </div>
+
+    <p class="body reveal" style="margin-top:38px">
+      The catch: <b>Italy ranks #1 in coping ratio but only #24 in happiness.</b> So this
+      isn't a clean one-to-one. Coping ratio captures musical <i>style</i>; happiness
+      captures <i>life</i>. They overlap on average — but for any one country, culture and
+      genre dominate.
+    </p>
+  </div>
+</section>
+
+<section class="alt" id="genre">
+  <div class="wrap">
+    <div class="kicker amber reveal">05 · THE GENRE CHECK</div>
+    <h2 class="reveal">But isn't this <em>just genre?</em></h2>
+    <p class="body reveal">
+      A reasonable objection: maybe we're not measuring emotion at all. Latin countries
+      stream more reggaeton, and reggaeton is engineered to be upbeat — high-tempo, major-key,
+      celebration-shaped. European countries stream more moody indie and alt-pop. Maybe the
+      whole "coping ratio" is just <i>genre mix</i> dressed up as emotion, and we've discovered
+      nothing about happiness at all — just that different cultures listen to different stuff.
+    </p>
+    <p class="body reveal">
+      So we tested it directly. For each (country, genre) pair we computed how often that
+      country listens to that genre, divided by how often the world does — on a
+      <span class="mono">log₂</span> scale, so listening at half the global rate and double
+      the global rate read as equal-magnitude opposites. The result is a matrix of cultural
+      signatures: where each country over- and under-indexes against the global default.
+    </p>
+    <figure class="viz-card reveal">
+      <h3>Figure 4 · Genre over- and under-indexing — pick a continent</h3>
+      <div class="viz-sub">log₂ ratio of P(genre|country) ÷ P(genre|global) · use the dropdown to switch continents</div>
+      <iframe src="visualizations/v4_genre_heatmap.html" height="640" title="Genre heatmap with continent dropdown"></iframe>
+      <figcaption>
+        <b>Figure 4 ·</b> Each cell shows how much a country listens to a given genre relative
+        to the global average, on a log₂ scale. Magenta = over-indexing. Cyan = under-indexing.
+        The Americas view lights up the <span class="mono">latin</span> column. Asia/Oceania
+        over-indexes massively on <span class="mono">k-pop</span>. Europe leans toward
+        <span class="mono">hip hop</span> and <span class="mono">indie</span>. Use the
+        dropdown to flip between continents — the cultural signatures are unambiguous.
+      </figcaption>
+    </figure>
+    <p class="body reveal" style="margin-top:30px">
+      <b>The genre patterns are real — and strong.</b> Latin charts really are dominated by
+      Latin music; K-pop really does carry Asia/Oceania. The objection has a real basis. But
+      here's the thing: the audio-feature signals from §04 — acousticness down, speechiness
+      up — cut <i>across</i> these continental blocks. Finland and Italy share the moody-and-
+      acoustic register but their genre mixes are completely different. Mexico and Colombia
+      both lean bright but their genre mixes overlap heavily.
+    </p>
+    <p class="body reveal">
+      The features track happiness. The genres track culture. Both are real signals, but
+      they're <i>not the same signal</i>, and one isn't an artefact of the other. That's why
+      we report the headline in features, not in genres.
+    </p>
+    <div class="survives reveal"><p>The inversion <em>survives.</em></p></div>
+  </div>
+</section>
+
+<section class="alt" id="close">
+  <div class="wrap">
+    <div class="kicker magenta reveal">06 · THE CLOSE</div>
+    <h2 class="reveal">A single Spotify row<br><em>is a diagnosis.</em></h2>
+    <p class="lede reveal">
+      We set out to test whether what people stream tells you anything about how they feel.
+      It does. Just not in the direction we predicted.
+    </p>
+
+    <div class="reveal" style="margin:48px 0; padding:40px; border-left:4px solid var(--magenta);
+                                background:var(--bg-card); border-radius:0 8px 8px 0;
+                                max-width:820px; position:relative">
+      <div style="position:absolute; top:-12px; left:32px; background:var(--bg);
+                  color:var(--ink-ghost); font-family:var(--mono); font-size:10px;
+                  letter-spacing:.22em; padding:4px 12px; border:1px solid var(--line); border-radius:12px">
+        KEY FINDINGS
+      </div>
+      <p style="font-size:18px; line-height:1.7; color:var(--ink); margin-bottom:24px">
+        Valence didn't predict happiness. <b>Acousticness did.</b> So did <b>speechiness.</b>
+        And the "loud-cope" countries — high-energy, lower-valence — turned out to be the
+        happiest, not the saddest. The <b>coping ratio</b> runs the <i>opposite</i> way to
+        the naive guess.
+      </p>
+      <p style="font-size:16px; line-height:1.7; color:var(--ink-dim)">
+        A country's playlist isn't a record of what it feels. It's a record of what it
+        <span style="color:var(--cyan); font-weight:600">reaches for</span>. Finland reaches
+        for moody, intense music. Colombia reaches for joy. Italy reaches for moody music
+        too — and Italy ranks #24 on the happiness ladder. Music and wellbeing aren't the
+        same signal. They're two different windows on the same place.
+      </p>
+    </div>
+
+    <p class="reveal" style="margin-top:48px">
+      <a class="cta" href="explainer_notebook.ipynb">→ Read the explainer notebook</a>
+      <a class="cta alt" href="country_features_full.csv">↓ Download the data (CSV)</a>
+    </p>
+  </div>
+</section>
+
+<section id="profile">
+  <div class="wrap">
+    <div class="kicker reveal">07 · YOUR TURN</div>
+    <h2 class="reveal">Thirty-four countries.<br><em>Thirty-four fingerprints.</em> Pick one.</h2>
+    <p class="body reveal">
+      The argument's done. The picker below is yours. Choose any country and the
+      <b>receipt</b> shows its happiness rank, the three headline audio numbers, the gap to
+      the global baseline, and the country's top genres in descending order. The
+      <b>radar</b> beside it plots six audio features on a normalised scale — each feature
+      stretched to span the range across the 34 countries — so the polygon's <i>shape</i>
+      is what's comparable across selections, not its raw size. The dotted amber overlay is
+      the global baseline.
+    </p>
+    <p class="body reveal">
+      Try Finland against Colombia. Same six axes, two completely different shapes — and
+      Finland's the happier one.
+    </p>
+
+    <div class="receipt-pickers reveal">
+      <label for="cont-rec">Continent</label>
+      <select id="cont-rec"></select>
+      <label for="country-rec">Country</label>
+      <select id="country-rec"></select>
+    </div>
+
+    <div class="profile-wrap reveal">
+      <div class="receipt" id="receipt"></div>
+      <figure class="viz-card" style="margin:0">
+        <h3>Audio fingerprint radar</h3>
+        <div class="viz-sub">six audio features normalised across the 34-country sample · dotted amber = global baseline</div>
+        <iframe id="radar-frame" src="visualizations/v5_profile.html" height="640" title="Country profile radar"></iframe>
+      </figure>
+    </div>
+    <figcaption style="margin-top:22px; max-width:980px">
+      <b>Figure 5 ·</b> Per-country audio receipt and fingerprint radar. The receipt is the
+      metaphor made literal — country stats, the three headline audio numbers, and the country's
+      genre diet. The radar shows the same audio space normalised across the 34-country sample,
+      so the polygon's <i>shape</i> is comparable across selections.
+    </figcaption>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <h5>Emotional Receipts</h5>
+      <p>A 02806 Social Data Analysis &amp; Visualization project at DTU · 2026.</p>
+    </div>
+    <div>
+      <h5>Sources</h5>
+      <a href="https://www.kaggle.com/datasets/pepepython/spotify-huge-database-daily-charts-over-3-years">Spotify Daily Top-200 (Kaggle)</a>
+      <a href="https://worldhappiness.report/ed/2019/">World Happiness Report 2019</a>
+    </div>
+    <div>
+      <h5>Method</h5>
+      <p>Segel &amp; Heer (2010): Magazine genre, Martini-Glass structure, scrollytelling delivery.</p>
+      <a href="explainer_notebook.ipynb">Explainer notebook</a>
+    </div>
+  </div>
+  <div class="wrap fine">© 2026 · DTU 02806 · Built with cyber-noir aesthetic + open data</div>
+</footer>
+
+<script id="payload" type="application/json">{"countries": [{"country": "Argentina", "continent": "Americas", "n_tracks": 3021, "valence": 0.578, "energy": 0.681, "coping_ratio": 1.158, "acousticness": 0.222, "danceability": 0.704, "speechiness": 0.107, "whr": 6.086, "whr_rank": 27}, {"country": "Australia", "continent": "Asia/Oceania", "n_tracks": 4034, "valence": 0.472, "energy": 0.632, "coping_ratio": 1.312, "acousticness": 0.223, "danceability": 0.655, "speechiness": 0.117, "whr": 7.228, "whr_rank": 10}, {"country": "Austria", "continent": "Europe", "n_tracks": 6528, "valence": 0.475, "energy": 0.655, "coping_ratio": 1.352, "acousticness": 0.214, "danceability": 0.68, "speechiness": 0.149, "whr": 7.246, "whr_rank": 9}, {"country": "Belgium", "continent": "Europe", "n_tracks": 6037, "valence": 0.482, "energy": 0.633, "coping_ratio": 1.288, "acousticness": 0.261, "danceability": 0.677, "speechiness": 0.142, "whr": 6.923, "whr_rank": 15}, {"country": "Brazil", "continent": "Americas", "n_tracks": 3318, "valence": 0.562, "energy": 0.676, "coping_ratio": 1.182, "acousticness": 0.292, "danceability": 0.669, "speechiness": 0.106, "whr": 6.3, "whr_rank": 22}, {"country": "Canada", "continent": "Americas", "n_tracks": 5635, "valence": 0.457, "energy": 0.618, "coping_ratio": 1.322, "acousticness": 0.22, "danceability": 0.678, "speechiness": 0.144, "whr": 7.278, "whr_rank": 8}, {"country": "Chile", "continent": "Americas", "n_tracks": 3500, "valence": 0.597, "energy": 0.681, "coping_ratio": 1.122, "acousticness": 0.25, "danceability": 0.694, "speechiness": 0.107, "whr": 6.444, "whr_rank": 20}, {"country": "Colombia", "continent": "Americas", "n_tracks": 3216, "valence": 0.604, "energy": 0.689, "coping_ratio": 1.121, "acousticness": 0.236, "danceability": 0.699, "speechiness": 0.105, "whr": 6.125, "whr_rank": 26}, {"country": "Costa Rica", "continent": "Americas", "n_tracks": 2975, "valence": 0.54, "energy": 0.659, "coping_ratio": 1.198, "acousticness": 0.238, "danceability": 0.679, "speechiness": 0.108, "whr": 7.167, "whr_rank": 11}, {"country": "Denmark", "continent": "Europe", "n_tracks": 5233, "valence": 0.502, "energy": 0.632, "coping_ratio": 1.235, "acousticness": 0.224, "danceability": 0.681, "speechiness": 0.122, "whr": 7.6, "whr_rank": 2}, {"country": "Ecuador", "continent": "Americas", "n_tracks": 2660, "valence": 0.593, "energy": 0.686, "coping_ratio": 1.138, "acousticness": 0.239, "danceability": 0.7, "speechiness": 0.106, "whr": 6.028, "whr_rank": 28}, {"country": "Finland", "continent": "Europe", "n_tracks": 6783, "valence": 0.491, "energy": 0.672, "coping_ratio": 1.342, "acousticness": 0.187, "danceability": 0.645, "speechiness": 0.1, "whr": 7.769, "whr_rank": 1}, {"country": "France", "continent": "Europe", "n_tracks": 6449, "valence": 0.502, "energy": 0.646, "coping_ratio": 1.262, "acousticness": 0.297, "danceability": 0.718, "speechiness": 0.169, "whr": 6.592, "whr_rank": 18}, {"country": "Germany", "continent": "Europe", "n_tracks": 6941, "valence": 0.476, "energy": 0.661, "coping_ratio": 1.36, "acousticness": 0.213, "danceability": 0.692, "speechiness": 0.173, "whr": 6.985, "whr_rank": 14}, {"country": "Global", "continent": null, "n_tracks": 5461, "valence": 0.481, "energy": 0.636, "coping_ratio": 1.295, "acousticness": 0.222, "danceability": 0.682, "speechiness": 0.136, "whr": null, "whr_rank": null}, {"country": "Indonesia", "continent": "Asia/Oceania", "n_tracks": 3069, "valence": 0.46, "energy": 0.612, "coping_ratio": 1.301, "acousticness": 0.298, "danceability": 0.623, "speechiness": 0.081, "whr": 5.192, "whr_rank": 34}, {"country": "Ireland", "continent": "Europe", "n_tracks": 5370, "valence": 0.487, "energy": 0.639, "coping_ratio": 1.287, "acousticness": 0.228, "danceability": 0.639, "speechiness": 0.108, "whr": 7.021, "whr_rank": 13}, {"country": "Italy", "continent": "Europe", "n_tracks": 5219, "valence": 0.478, "energy": 0.671, "coping_ratio": 1.375, "acousticness": 0.214, "danceability": 0.664, "speechiness": 0.132, "whr": 6.223, "whr_rank": 24}, {"country": "Malaysia", "continent": "Asia/Oceania", "n_tracks": 3902, "valence": 0.46, "energy": 0.623, "coping_ratio": 1.327, "acousticness": 0.266, "danceability": 0.633, "speechiness": 0.09, "whr": 5.339, "whr_rank": 33}, {"country": "Mexico", "continent": "Americas", "n_tracks": 2833, "valence": 0.571, "energy": 0.65, "coping_ratio": 1.12, "acousticness": 0.259, "danceability": 0.672, "speechiness": 0.093, "whr": 6.595, "whr_rank": 17}, {"country": "Netherlands", "continent": "Europe", "n_tracks": 6695, "valence": 0.514, "energy": 0.634, "coping_ratio": 1.21, "acousticness": 0.237, "danceability": 0.694, "speechiness": 0.161, "whr": 7.488, "whr_rank": 4}, {"country": "New Zealand", "continent": "Asia/Oceania", "n_tracks": 3591, "valence": 0.469, "energy": 0.617, "coping_ratio": 1.288, "acousticness": 0.23, "danceability": 0.662, "speechiness": 0.122, "whr": 7.307, "whr_rank": 7}, {"country": "Norway", "continent": "Europe", "n_tracks": 6073, "valence": 0.466, "energy": 0.631, "coping_ratio": 1.325, "acousticness": 0.227, "danceability": 0.65, "speechiness": 0.105, "whr": 7.554, "whr_rank": 3}, {"country": "Peru", "continent": "Americas", "n_tracks": 2699, "valence": 0.6, "energy": 0.693, "coping_ratio": 1.137, "acousticness": 0.241, "danceability": 0.694, "speechiness": 0.1, "whr": 5.697, "whr_rank": 29}, {"country": "Philippines", "continent": "Asia/Oceania", "n_tracks": 2806, "valence": 0.458, "energy": 0.602, "coping_ratio": 1.287, "acousticness": 0.277, "danceability": 0.633, "speechiness": 0.083, "whr": 5.631, "whr_rank": 31}, {"country": "Poland", "continent": "Europe", "n_tracks": 5272, "valence": 0.475, "energy": 0.647, "coping_ratio": 1.335, "acousticness": 0.245, "danceability": 0.656, "speechiness": 0.13, "whr": 6.182, "whr_rank": 25}, {"country": "Portugal", "continent": "Europe", "n_tracks": 4589, "valence": 0.475, "energy": 0.622, "coping_ratio": 1.281, "acousticness": 0.26, "danceability": 0.657, "speechiness": 0.123, "whr": 5.693, "whr_rank": 30}, {"country": "Singapore", "continent": "Asia/Oceania", "n_tracks": 3622, "valence": 0.461, "energy": 0.626, "coping_ratio": 1.331, "acousticness": 0.257, "danceability": 0.634, "speechiness": 0.09, "whr": 6.262, "whr_rank": 23}, {"country": "Spain", "continent": "Europe", "n_tracks": 4286, "valence": 0.55, "energy": 0.666, "coping_ratio": 1.189, "acousticness": 0.258, "danceability": 0.678, "speechiness": 0.105, "whr": 6.354, "whr_rank": 21}, {"country": "Sweden", "continent": "Europe", "n_tracks": 6969, "valence": 0.477, "energy": 0.627, "coping_ratio": 1.287, "acousticness": 0.247, "danceability": 0.642, "speechiness": 0.106, "whr": 7.343, "whr_rank": 6}, {"country": "Switzerland", "continent": "Europe", "n_tracks": 7685, "valence": 0.481, "energy": 0.647, "coping_ratio": 1.316, "acousticness": 0.235, "danceability": 0.701, "speechiness": 0.165, "whr": 7.48, "whr_rank": 5}, {"country": "Taiwan", "continent": "Asia/Oceania", "n_tracks": 7594, "valence": 0.425, "energy": 0.589, "coping_ratio": 1.355, "acousticness": 0.335, "danceability": 0.599, "speechiness": 0.075, "whr": 6.446, "whr_rank": 19}, {"country": "Turkey", "continent": "Europe", "n_tracks": 3365, "valence": 0.474, "energy": 0.646, "coping_ratio": 1.335, "acousticness": 0.249, "danceability": 0.661, "speechiness": 0.111, "whr": 5.373, "whr_rank": 32}, {"country": "UK", "continent": "Europe", "n_tracks": 6539, "valence": 0.492, "energy": 0.647, "coping_ratio": 1.29, "acousticness": 0.225, "danceability": 0.648, "speechiness": 0.132, "whr": 7.054, "whr_rank": 12}, {"country": "USA", "continent": "Americas", "n_tracks": 6645, "valence": 0.458, "energy": 0.619, "coping_ratio": 1.321, "acousticness": 0.22, "danceability": 0.678, "speechiness": 0.15, "whr": 6.892, "whr_rank": 16}], "genre_mix": {"Argentina": [{"genre": "pop", "pct": 33.8}, {"genre": "latin", "pct": 23.3}, {"genre": "hip hop", "pct": 12.6}, {"genre": "rock", "pct": 7.4}, {"genre": "rap", "pct": 5.3}, {"genre": "else", "pct": 3.7}], "Australia": [{"genre": "pop", "pct": 39.0}, {"genre": "hip hop", "pct": 16.2}, {"genre": "rap", "pct": 10.8}, {"genre": "rock", "pct": 5.6}, {"genre": "dance/electronic", "pct": 5.4}, {"genre": "r&b/soul", "pct": 4.1}], "Austria": [{"genre": "hip hop", "pct": 35.2}, {"genre": "pop", "pct": 27.0}, {"genre": "rap", "pct": 11.5}, {"genre": "else", "pct": 5.9}, {"genre": "house", "pct": 3.4}, {"genre": "trap", "pct": 3.3}], "Belgium": [{"genre": "hip hop", "pct": 31.7}, {"genre": "pop", "pct": 28.2}, {"genre": "indie", "pct": 9.4}, {"genre": "rap", "pct": 6.4}, {"genre": "dance/electronic", "pct": 5.0}, {"genre": "else", "pct": 4.4}], "Brazil": [{"genre": "pop", "pct": 31.6}, {"genre": "latin", "pct": 18.4}, {"genre": "funk", "pct": 14.4}, {"genre": "else", "pct": 9.6}, {"genre": "hip hop", "pct": 5.2}, {"genre": "dance/electronic", "pct": 4.5}], "Canada": [{"genre": "hip hop", "pct": 29.8}, {"genre": "pop", "pct": 28.8}, {"genre": "rap", "pct": 15.1}, {"genre": "r&b/soul", "pct": 4.5}, {"genre": "rock", "pct": 3.4}, {"genre": "country", "pct": 2.9}], "Chile": [{"genre": "latin", "pct": 39.3}, {"genre": "pop", "pct": 24.7}, {"genre": "reggaeton", "pct": 6.5}, {"genre": "else", "pct": 5.0}, {"genre": "rock", "pct": 4.6}, {"genre": "hip hop", "pct": 4.3}], "Colombia": [{"genre": "pop", "pct": 38.1}, {"genre": "latin", "pct": 32.2}, {"genre": "hip hop", "pct": 4.9}, {"genre": "else", "pct": 4.4}, {"genre": "reggaeton", "pct": 3.7}, {"genre": "rock", "pct": 3.0}], "Costa Rica": [{"genre": "pop", "pct": 32.9}, {"genre": "latin", "pct": 25.5}, {"genre": "hip hop", "pct": 8.7}, {"genre": "rap", "pct": 6.8}, {"genre": "rock", "pct": 4.6}, {"genre": "else", "pct": 3.7}], "Denmark": [{"genre": "pop", "pct": 38.9}, {"genre": "hip hop", "pct": 29.9}, {"genre": "rap", "pct": 7.1}, {"genre": "dance/electronic", "pct": 6.2}, {"genre": "else", "pct": 5.3}, {"genre": "house", "pct": 3.3}], "Ecuador": [{"genre": "pop", "pct": 35.2}, {"genre": "latin", "pct": 33.1}, {"genre": "hip hop", "pct": 4.9}, {"genre": "else", "pct": 4.1}, {"genre": "reggaeton", "pct": 3.9}, {"genre": "rap", "pct": 3.2}], "Finland": [{"genre": "pop", "pct": 56.3}, {"genre": "hip hop", "pct": 8.2}, {"genre": "else", "pct": 7.5}, {"genre": "rap", "pct": 6.8}, {"genre": "metal", "pct": 5.5}, {"genre": "rock", "pct": 3.4}], "France": [{"genre": "indie", "pct": 36.7}, {"genre": "hip hop", "pct": 30.2}, {"genre": "pop", "pct": 14.3}, {"genre": "else", "pct": 4.7}, {"genre": "rap", "pct": 3.8}, {"genre": "dance/electronic", "pct": 2.1}], "Germany": [{"genre": "hip hop", "pct": 43.3}, {"genre": "pop", "pct": 21.7}, {"genre": "rap", "pct": 13.2}, {"genre": "else", "pct": 3.9}, {"genre": "trap", "pct": 3.7}, {"genre": "dance/electronic", "pct": 2.8}], "Global": [{"genre": "pop", "pct": 31.2}, {"genre": "hip hop", "pct": 26.1}, {"genre": "rap", "pct": 12.9}, {"genre": "latin", "pct": 6.4}, {"genre": "rock", "pct": 3.6}, {"genre": "r&b/soul", "pct": 3.3}], "Indonesia": [{"genre": "pop", "pct": 40.2}, {"genre": "k-pop", "pct": 17.2}, {"genre": "else", "pct": 8.7}, {"genre": "indie", "pct": 6.8}, {"genre": "hip hop", "pct": 5.6}, {"genre": "rap", "pct": 3.6}], "Ireland": [{"genre": "pop", "pct": 40.0}, {"genre": "hip hop", "pct": 13.5}, {"genre": "rock", "pct": 8.5}, {"genre": "rap", "pct": 8.0}, {"genre": "dance/electronic", "pct": 5.8}, {"genre": "else", "pct": 5.0}], "Italy": [{"genre": "hip hop", "pct": 39.5}, {"genre": "pop", "pct": 33.9}, {"genre": "rap", "pct": 6.2}, {"genre": "else", "pct": 4.3}, {"genre": "indie", "pct": 3.6}, {"genre": "rock", "pct": 3.4}], "Malaysia": [{"genre": "pop", "pct": 46.4}, {"genre": "k-pop", "pct": 14.6}, {"genre": "hip hop", "pct": 7.5}, {"genre": "rap", "pct": 6.8}, {"genre": "r&b/soul", "pct": 4.6}, {"genre": "else", "pct": 4.0}], "Mexico": [{"genre": "latin", "pct": 31.3}, {"genre": "pop", "pct": 30.7}, {"genre": "else", "pct": 8.2}, {"genre": "hip hop", "pct": 5.9}, {"genre": "rock", "pct": 3.8}, {"genre": "bolero", "pct": 3.6}], "Netherlands": [{"genre": "hip hop", "pct": 47.0}, {"genre": "pop", "pct": 25.3}, {"genre": "else", "pct": 5.2}, {"genre": "rap", "pct": 5.1}, {"genre": "dance/electronic", "pct": 3.4}, {"genre": "house", "pct": 2.8}], "New Zealand": [{"genre": "pop", "pct": 40.5}, {"genre": "hip hop", "pct": 17.5}, {"genre": "rap", "pct": 12.9}, {"genre": "rock", "pct": 5.1}, {"genre": "r&b/soul", "pct": 4.4}, {"genre": "else", "pct": 3.6}], "Norway": [{"genre": "pop", "pct": 47.1}, {"genre": "hip hop", "pct": 11.4}, {"genre": "else", "pct": 8.1}, {"genre": "rap", "pct": 7.5}, {"genre": "house", "pct": 6.4}, {"genre": "indie", "pct": 5.7}], "Peru": [{"genre": "pop", "pct": 34.0}, {"genre": "latin", "pct": 32.8}, {"genre": "else", "pct": 6.0}, {"genre": "hip hop", "pct": 4.2}, {"genre": "reggaeton", "pct": 4.1}, {"genre": "k-pop", "pct": 3.5}], "Philippines": [{"genre": "pop", "pct": 44.0}, {"genre": "opm", "pct": 12.5}, {"genre": "k-pop", "pct": 9.6}, {"genre": "hip hop", "pct": 5.6}, {"genre": "rap", "pct": 4.6}, {"genre": "else", "pct": 4.5}], "Poland": [{"genre": "pop", "pct": 32.8}, {"genre": "hip hop", "pct": 31.6}, {"genre": "rap", "pct": 6.4}, {"genre": "rock", "pct": 5.5}, {"genre": "indie", "pct": 5.1}, {"genre": "else", "pct": 3.7}], "Portugal": [{"genre": "pop", "pct": 35.0}, {"genre": "hip hop", "pct": 21.2}, {"genre": "rap", "pct": 8.3}, {"genre": "rock", "pct": 5.6}, {"genre": "else", "pct": 5.2}, {"genre": "dance/electronic", "pct": 3.9}], "Singapore": [{"genre": "pop", "pct": 47.7}, {"genre": "k-pop", "pct": 14.1}, {"genre": "hip hop", "pct": 7.6}, {"genre": "rap", "pct": 6.0}, {"genre": "r&b/soul", "pct": 3.9}, {"genre": "house", "pct": 3.6}], "Spain": [{"genre": "pop", "pct": 38.9}, {"genre": "latin", "pct": 24.8}, {"genre": "else", "pct": 8.6}, {"genre": "rap", "pct": 8.4}, {"genre": "hip hop", "pct": 4.6}, {"genre": "r&b/soul", "pct": 2.7}], "Sweden": [{"genre": "pop", "pct": 48.0}, {"genre": "rap", "pct": 13.2}, {"genre": "hip hop", "pct": 11.6}, {"genre": "else", "pct": 6.1}, {"genre": "house", "pct": 5.1}, {"genre": "dance/electronic", "pct": 4.1}], "Switzerland": [{"genre": "hip hop", "pct": 40.1}, {"genre": "pop", "pct": 21.6}, {"genre": "rap", "pct": 10.2}, {"genre": "indie", "pct": 6.7}, {"genre": "else", "pct": 4.0}, {"genre": "trap", "pct": 3.6}], "Taiwan": [{"genre": "pop", "pct": 54.3}, {"genre": "k-pop", "pct": 8.3}, {"genre": "indie", "pct": 8.0}, {"genre": "else", "pct": 7.0}, {"genre": "house", "pct": 4.6}, {"genre": "hip hop", "pct": 4.6}], "Turkey": [{"genre": "pop", "pct": 40.2}, {"genre": "hip hop", "pct": 26.5}, {"genre": "else", "pct": 9.7}, {"genre": "rock", "pct": 5.8}, {"genre": "rap", "pct": 4.9}, {"genre": "dance/electronic", "pct": 2.5}], "UK": [{"genre": "pop", "pct": 35.1}, {"genre": "hip hop", "pct": 17.2}, {"genre": "dance/electronic", "pct": 10.1}, {"genre": "rock", "pct": 7.3}, {"genre": "rap", "pct": 7.1}, {"genre": "r&b/soul", "pct": 5.8}], "USA": [{"genre": "hip hop", "pct": 29.7}, {"genre": "pop", "pct": 27.1}, {"genre": "rap", "pct": 17.6}, {"genre": "r&b/soul", "pct": 3.9}, {"genre": "country", "pct": 3.6}, {"genre": "rock", "pct": 3.3}]}, "global": {"country": "Global", "continent": null, "n_tracks": 5461, "valence": 0.481, "energy": 0.636, "coping_ratio": 1.295, "acousticness": 0.222, "danceability": 0.682, "speechiness": 0.136, "whr": null, "whr_rank": null}, "global_ratio": 1.295, "continents": {"Europe": ["Austria", "Belgium", "Denmark", "Finland", "France", "Germany", "Ireland", "Italy", "Netherlands", "Norway", "Poland", "Portugal", "Spain", "Sweden", "Switzerland", "Turkey", "UK"], "Americas": ["Argentina", "Brazil", "Canada", "Chile", "Colombia", "Costa Rica", "Ecuador", "Mexico", "Peru", "USA"], "Asia/Oceania": ["Australia", "Indonesia", "Malaysia", "New Zealand", "Philippines", "Singapore", "Taiwan"]}, "corr": [{"feat": "valence", "r": -0.163, "p": 0.3558}, {"feat": "energy", "r": -0.063, "p": 0.723}, {"feat": "danceability", "r": 0.17, "p": 0.337}, {"feat": "acousticness", "r": -0.52, "p": 0.0016}, {"feat": "loudness", "r": -0.279, "p": 0.1107}, {"feat": "tempo", "r": -0.15, "p": 0.397}, {"feat": "speechiness", "r": 0.467, "p": 0.0053}, {"feat": "instrumentalness", "r": 0.324, "p": 0.0616}, {"feat": "liveliness", "r": -0.014, "p": 0.9382}, {"feat": "mode", "r": -0.185, "p": 0.2961}], "corr_derived": {"feat": "coping_ratio", "r": 0.176, "p": 0.318}, "meta": {"n_tracks": 170614, "n_unique": 62416, "n_countries": 34, "n_features": 10, "year_range": "2017-2020"}}</script>
+<script>
+let DATA = null;
+try {
+  DATA = JSON.parse(document.getElementById('payload').textContent);
+} catch (err) {
+  // Payload not yet injected. Static content still renders; §06 picker stays quiet.
+  console.warn('[Emotional Receipts] data payload not injected — run `python build_all.py` to populate §06.');
+}
+
+// reveal-on-scroll (always runs)
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver((entries)=>{
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+}, { rootMargin:'0px 0px -10% 0px', threshold:0.05 });
+reveals.forEach(el => obs.observe(el));
+
+// §07 receipt + radar
+// The continent → country list is static, so dropdowns + radar work even without DATA.
+// Only the receipt body needs the JSON payload (run python build_all.py to populate it).
+const CONTINENTS_STATIC = {
+  'Europe': ['Austria','Belgium','Denmark','Finland','France','Germany','Ireland',
+             'Italy','Netherlands','Norway','Poland','Portugal','Spain','Sweden',
+             'Switzerland','Turkey','UK'],
+  'Americas': ['Argentina','Brazil','Canada','Chile','Colombia','Costa Rica',
+               'Ecuador','Mexico','Peru','USA'],
+  'Asia/Oceania': ['Australia','Indonesia','Malaysia','New Zealand','Philippines',
+                   'Singapore','Taiwan'],
+};
+
+const contSel    = document.getElementById('cont-rec');
+const countrySel = document.getElementById('country-rec');
+const receipt    = document.getElementById('receipt');
+const radarFrame = document.getElementById('radar-frame');
+
+Object.keys(CONTINENTS_STATIC).forEach(k => contSel.add(new Option(k, k)));
+contSel.value = 'Europe';
+
+function fillCountries(){
+  countrySel.innerHTML = '';
+  CONTINENTS_STATIC[contSel.value].forEach(c => countrySel.add(new Option(c, c)));
+  if (contSel.value === 'Europe') countrySel.value = 'Finland';
+}
+fillCountries();
+
+function pushToRadar(country){
+  if (!radarFrame || !radarFrame.contentWindow) return;
+  try { radarFrame.contentWindow.postMessage({type:'set-country', country}, '*'); }
+  catch (e) { /* iframe not ready yet */ }
+}
+
+// Push current country to radar once the iframe announces it's ready.
+window.addEventListener('message', function(e){
+  if (e.data && e.data.type === 'radar-ready' && countrySel.value) pushToRadar(countrySel.value);
+});
+
+function renderReceipt(name){
+  if (!DATA) {
+    receipt.innerHTML =
+      '<div class="r-head">AUDIO ARCHIVE · EMOTIONAL RECEIPT</div>' +
+      '<div style="text-align:center; color:#5a5a64; padding:34px 14px; ' +
+                  'font-size:11px; line-height:1.7; letter-spacing:.05em">' +
+        'Receipt data loads after running:<br><br>' +
+        '<code style="background:#181820;color:#f5f4ec;padding:5px 12px;' +
+                     'border-radius:2px;font-size:11px;font-weight:700">' +
+          'python build_all.py' +
+        '</code><br><br>' +
+        'then refresh this page.' +
+      '</div>';
+    return;
+  }
+  const c = DATA.countries.find(x => x.country === name); if (!c) return;
+  const genres = (DATA.genre_mix[name] || []).slice(0, 6);
+  const date = new Date().toISOString().slice(0, 10);
+  const time = new Date().toTimeString().slice(0, 5);
+  const above = c.coping_ratio > DATA.global_ratio;
+  receipt.innerHTML = `
+    <div class="r-head">AUDIO ARCHIVE · EMOTIONAL RECEIPT</div>
+    <div class="r-row"><span>NATION</span><span><b>${c.country}</b></span></div>
+    <div class="r-row"><span>WHR RANK</span><span>${c.whr_rank ? '#' + c.whr_rank + ' / 156' : '—'}</span></div>
+    <div class="r-row"><span>HAPPINESS</span><span>${c.whr ? c.whr.toFixed(2) : '—'} / 10</span></div>
+    <div class="r-row"><span>SAMPLE SIZE</span><span>${c.n_tracks.toLocaleString()} tracks</span></div>
+    <div class="r-divider"></div>
+    <div class="r-row bold"><span>VALENCE</span><span>${c.valence.toFixed(3)}</span></div>
+    <div class="r-row bold"><span>ENERGY</span><span>${c.energy.toFixed(3)}</span></div>
+    <div class="r-row bold"><span>COPING RATIO</span><span>${c.coping_ratio.toFixed(3)}</span></div>
+    <div class="r-row r-tiny"><span>vs global ${DATA.global_ratio.toFixed(3)}</span><span>${above ? '↑ above' : '↓ below'}</span></div>
+    <div class="r-divider"></div>
+    <div class="r-section">TOP GENRES FOR ${c.country.toUpperCase()}</div>
+    ${genres.map(g => `
+      <div class="r-row r-genre"><span>${g.genre}</span><span>${g.pct.toFixed(1)}%</span></div>
+    `).join('')}
+    <div class="r-foot">${date} · ${time} · DTU 02806<br>SCANNED IN AUDIO-FEATURE SPACE</div>
+  `;
+}
+
+function update(){
+  const c = countrySel.value; if (!c) return;
+  renderReceipt(c);
+  pushToRadar(c);
+}
+contSel.addEventListener('change', () => { fillCountries(); update(); });
+countrySel.addEventListener('change', update);
+update();
+</script>
+</body>
+</html>
