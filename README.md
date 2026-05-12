@@ -1,5 +1,5 @@
 # Emotional Receipts
-> *A nation's playlist as its therapy bill.*
+*A nation's playlist as its therapy bill.*
 
 **DTU 02806 · Final Project · Spring 2026**
 
