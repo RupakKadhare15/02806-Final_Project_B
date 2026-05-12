@@ -38,10 +38,6 @@ explainer_notebook.ipynb    # Full analysis notebook
 country_features_full.csv   # Raw data download
 ```
 
-## How to Run
-
-Open `index.html` in a browser. All visualizations are embedded as local iframes — no server required.
-
 ## Course
 
 DTU 02806 — Social Data Analysis and Visualization
