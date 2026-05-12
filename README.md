@@ -38,10 +38,6 @@ explainer_notebook.ipynb    # Full analysis notebook
 country_features_full.csv   # Raw data download
 ```
 
-## Course
-
-DTU 02806 — Social Data Analysis and Visualization
-
 ## Group 21
 
 | Name | Student ID |
